@@ -134,6 +134,7 @@ const KEYS = {
   templates: "crp_templates",
   scans: "crp_scans",
   session: "crp_session",
+  unlocked: "crp_unlocked",
   seeded: "crp_seeded_v2",
 }
 
@@ -181,6 +182,30 @@ export const MASTER_ACCESS_CODE = "7993-0492"
 export function verifyAccessCode(input: string, buyerCode: string): boolean {
   const trimmed = input.trim().toUpperCase()
   return trimmed === buyerCode.toUpperCase() || trimmed === MASTER_ACCESS_CODE
+}
+
+/* ------------------------------------------------------------------ */
+/* Remember-unlocked buyers on this device                             */
+/* ------------------------------------------------------------------ */
+
+function loadUnlocked(): string[] {
+  return read<string[]>(KEYS.unlocked, [])
+}
+
+export function isBuyerUnlocked(id: string): boolean {
+  return loadUnlocked().includes(id)
+}
+
+export function markBuyerUnlocked(id: string) {
+  const list = loadUnlocked()
+  if (!list.includes(id)) {
+    list.push(id)
+    write(KEYS.unlocked, list)
+  }
+}
+
+export function forgetBuyerUnlocked(id: string) {
+  write(KEYS.unlocked, loadUnlocked().filter((x) => x !== id))
 }
 
 /* ------------------------------------------------------------------ */

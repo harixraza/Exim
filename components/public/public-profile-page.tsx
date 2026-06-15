@@ -11,7 +11,10 @@ import { PublicShell } from "@/components/public/public-shell"
 import {
   addScan,
   findTemplate,
+  forgetBuyerUnlocked,
+  isBuyerUnlocked,
   loadPublishedBuyers,
+  markBuyerUnlocked,
   ratingOf,
   verifyAccessCode,
   type BuyerRecord,
@@ -35,7 +38,9 @@ export function PublicProfilePage({ id }: { id: string }) {
 
   useEffect(() => {
     const all = loadPublishedBuyers()
-    setBuyer(all.find((b) => b.id === id) ?? null)
+    const found = all.find((b) => b.id === id) ?? null
+    setBuyer(found)
+    if (found && isBuyerUnlocked(found.id)) setUnlocked(true)
     setReady(true)
   }, [id])
 
@@ -53,11 +58,19 @@ export function PublicProfilePage({ id }: { id: string }) {
       result: ok ? "unlocked" : "failed",
     })
     if (ok) {
+      markBuyerUnlocked(buyer.id)
       setUnlocked(true)
       setError(false)
     } else {
       setError(true)
     }
+  }
+
+  function handleLockAgain() {
+    if (!buyer) return
+    forgetBuyerUnlocked(buyer.id)
+    setUnlocked(false)
+    setCode("")
   }
 
   if (!ready) {
@@ -100,13 +113,24 @@ export function PublicProfilePage({ id }: { id: string }) {
     return (
       <PublicShell>
         <div className="mx-auto max-w-3xl px-6 py-10">
-          <Link
-            href="/companies"
-            className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="size-3.5" />
-            Back to directory
-          </Link>
+          <div className="mb-4 flex items-center justify-between">
+            <Link
+              href="/companies"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="size-3.5" />
+              Back to directory
+            </Link>
+            <button
+              type="button"
+              onClick={handleLockAgain}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+              title="Require the access code again on this device"
+            >
+              <Lock className="size-3.5" />
+              Lock this device
+            </button>
+          </div>
           <Card className="overflow-hidden p-0">
             <BuyerProfile buyer={buyer} template={findTemplate(buyer.fields.template)} />
           </Card>
