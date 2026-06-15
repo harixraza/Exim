@@ -79,7 +79,7 @@ export function SettingsPage({ session }: { session: Session }) {
   }
 
   function handleReset() {
-    if (window.confirm("Reset all demo data? This restores the original seed buyers, exporters, users, roles and scans.")) {
+    if (window.confirm("Reset all portal data? This restores the original seed buyers, exporters, users, roles and scans.")) {
       resetDemoData()
       window.location.reload()
     }
@@ -212,8 +212,8 @@ export function SettingsPage({ session }: { session: Session }) {
       <Card className="p-6">
         <h2 className="text-base font-semibold text-foreground">Data Management</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          All portal data is stored locally in your browser (no server). Export it as JSON or reset to the
-          original demo data.
+          All portal data is stored locally in your browser. Export it as JSON or reset to the original seed
+          dataset.
         </p>
         <Separator className="my-5" />
         <div className="flex flex-wrap gap-3">
@@ -223,7 +223,7 @@ export function SettingsPage({ session }: { session: Session }) {
           </Button>
           <Button variant="outline" className="text-destructive hover:text-destructive" onClick={handleReset}>
             <RotateCcw className="size-4" />
-            Reset Demo Data
+            Reset Portal Data
           </Button>
         </div>
       </Card>

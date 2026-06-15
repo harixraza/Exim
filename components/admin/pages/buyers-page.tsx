@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,72 +14,138 @@ import {
 } from "@/components/ui/table"
 import { RatingBadge } from "@/components/rating-badge"
 import { Modal } from "@/components/modal"
-import { FakeQR } from "@/components/qr-code"
+import { RealQR } from "@/components/real-qr"
 import { CrpForm, FieldsDetail } from "@/components/crp-form"
-import { BUYER_SECTIONS } from "@/lib/fields"
+import { StatusToggle } from "@/components/status-toggle"
+import { BUYER_SECTIONS, type SectionDef } from "@/lib/fields"
 import {
   deleteBuyer,
   genAccessCode,
   loadBuyers,
   loadTemplates,
   newId,
+  publishBuyer,
   ratingOf,
   saveBuyer,
+  setBuyerStatus,
   type BuyerRecord,
+  type RecordStatus,
   type TemplateDef,
 } from "@/lib/store"
-import type { SectionDef } from "@/lib/fields"
-import { Plus, CheckCircle2, Eye, Trash2, KeyRound, QrCode } from "lucide-react"
+import { Plus, CheckCircle2, Eye, Pencil, Trash2, KeyRound, Send } from "lucide-react"
 
 type ModalState =
   | { mode: "add" }
+  | { mode: "edit"; buyer: BuyerRecord }
   | { mode: "saved"; buyer: BuyerRecord }
   | { mode: "view"; buyer: BuyerRecord }
   | null
+
+function publicProfileUrl(id: string): string {
+  if (typeof window === "undefined") return `/p/${id}`
+  return `${window.location.origin}/p/${id}`
+}
 
 export function BuyersPage() {
   const [buyers, setBuyers] = useState<BuyerRecord[]>([])
   const [templates, setTemplates] = useState<TemplateDef[]>([])
   const [modal, setModal] = useState<ModalState>(null)
+  const [filter, setFilter] = useState<"all" | "published" | "draft">("all")
 
   useEffect(() => {
     setBuyers(loadBuyers())
     setTemplates(loadTemplates())
   }, [])
 
-  // inject the QR-profile template picker into the Rating Assignment section
-  const formSections: SectionDef[] = BUYER_SECTIONS.map((s) =>
-    s.title === "Rating Assignment"
-      ? {
-          ...s,
-          fields: [
-            {
-              key: "template",
-              label: "QR Profile Template",
-              type: "select" as const,
-              options: templates.map((t) => t.name),
-              placeholder: "How the unlocked profile looks",
-            },
-            ...s.fields,
-          ],
-        }
-      : s,
-  )
-
   function refresh() {
     setBuyers(loadBuyers())
+    setTemplates(loadTemplates())
   }
 
-  function handleAdd(fields: Record<string, string>) {
+  const formSections: SectionDef[] = useMemo(
+    () =>
+      BUYER_SECTIONS.map((s) =>
+        s.title === "Rating Assignment"
+          ? {
+              ...s,
+              fields: [
+                {
+                  key: "template",
+                  label: "QR Profile Template",
+                  type: "select" as const,
+                  options: templates.map((t) => t.name),
+                  placeholder: "How the unlocked profile looks",
+                },
+                ...s.fields,
+              ],
+            }
+          : s,
+      ),
+    [templates],
+  )
+
+  function persistNew(fields: Record<string, string>, status: "draft" | "published"): BuyerRecord {
     const buyer: BuyerRecord = {
       id: newId("b"),
       createdAt: new Date().toISOString(),
+      publishedAt: status === "published" ? new Date().toISOString() : undefined,
       accessCode: genAccessCode(),
+      status,
       fields,
     }
     saveBuyer(buyer)
     refresh()
+    return buyer
+  }
+
+  function persistEdit(existing: BuyerRecord, fields: Record<string, string>, status?: "draft" | "published") {
+    const next: BuyerRecord = {
+      ...existing,
+      status: status ?? existing.status,
+      publishedAt:
+        status === "published" && existing.status === "draft"
+          ? new Date().toISOString()
+          : existing.publishedAt,
+      fields,
+    }
+    saveBuyer(next)
+    refresh()
+    return next
+  }
+
+  function handleAddPublish(fields: Record<string, string>) {
+    const buyer = persistNew(fields, "published")
     setModal({ mode: "saved", buyer })
+  }
+
+  function handleAddDraft(fields: Record<string, string>) {
+    persistNew(fields, "draft")
+    setModal(null)
+  }
+
+  function handleEditSave(fields: Record<string, string>) {
+    if (modal?.mode !== "edit") return
+    persistEdit(modal.buyer, fields)
+    setModal(null)
+  }
+
+  function handleEditPublish(fields: Record<string, string>) {
+    if (modal?.mode !== "edit") return
+    const next = persistEdit(modal.buyer, fields, "published")
+    if (modal.buyer.status === "draft") setModal({ mode: "saved", buyer: next })
+    else setModal(null)
+  }
+
+  function handlePublishFromRow(id: string) {
+    publishBuyer(id)
+    const updated = loadBuyers().find((b) => b.id === id)
+    refresh()
+    if (updated) setModal({ mode: "saved", buyer: updated })
+  }
+
+  function handleStatusChange(id: string, next: RecordStatus) {
+    setBuyerStatus(id, next)
+    refresh()
   }
 
   function handleDelete(id: string) {
@@ -88,10 +154,28 @@ export function BuyersPage() {
     setModal(null)
   }
 
+  const visible = buyers.filter((b) => (filter === "all" ? true : b.status === filter))
+  const draftCount = buyers.filter((b) => b.status === "draft").length
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{buyers.length} international buyers on record</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {(["all", "published", "draft"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={
+                "rounded-full px-3 py-1.5 text-xs font-medium transition-colors " +
+                (filter === f
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80")
+              }
+            >
+              {f === "all" ? `All (${buyers.length})` : f === "published" ? `Published (${buyers.length - draftCount})` : `Drafts (${draftCount})`}
+            </button>
+          ))}
+        </div>
         <Button onClick={() => setModal({ mode: "add" })}>
           <Plus className="size-4" />
           Add Buyer
@@ -106,19 +190,23 @@ export function BuyersPage() {
               <TableHead>Country</TableHead>
               <TableHead>Industry</TableHead>
               <TableHead>Rating</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Valid Until</TableHead>
               <TableHead>Access Code</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {buyers.map((b) => (
+            {visible.map((b) => (
               <TableRow key={b.id}>
                 <TableCell className="font-medium text-foreground">{b.fields.legalName}</TableCell>
                 <TableCell className="text-muted-foreground">{b.fields.country}</TableCell>
                 <TableCell className="max-w-44 truncate text-muted-foreground">{b.fields.industry}</TableCell>
                 <TableCell>
                   <RatingBadge rating={ratingOf(b)} />
+                </TableCell>
+                <TableCell>
+                  <StatusToggle status={b.status} onChange={(s) => handleStatusChange(b.id, s)} />
                 </TableCell>
                 <TableCell className="text-muted-foreground">{b.fields.validUntil || "—"}</TableCell>
                 <TableCell>
@@ -128,12 +216,27 @@ export function BuyersPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => setModal({ mode: "view", buyer: b })}>
+                    {b.status === "draft" ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                        title="Publish"
+                        onClick={() => handlePublishFromRow(b.id)}
+                      >
+                        <Send className="size-4" />
+                      </Button>
+                    ) : null}
+                    <Button variant="ghost" size="sm" title="Edit" onClick={() => setModal({ mode: "edit", buyer: b })}>
+                      <Pencil className="size-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" title="View" onClick={() => setModal({ mode: "view", buyer: b })}>
                       <Eye className="size-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
+                      title="Delete"
                       className="text-destructive hover:text-destructive"
                       onClick={() => handleDelete(b.id)}
                     >
@@ -143,10 +246,10 @@ export function BuyersPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {buyers.length === 0 ? (
+            {visible.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
-                  No buyers yet. Click “Add Buyer” to register the first international buyer.
+                <TableCell colSpan={8} className="py-10 text-center text-sm text-muted-foreground">
+                  No buyers match this filter.
                 </TableCell>
               </TableRow>
             ) : null}
@@ -154,40 +257,67 @@ export function BuyersPage() {
         </Table>
       </Card>
 
-      {/* Add buyer */}
+      {/* Add */}
       <Modal open={modal?.mode === "add"} onClose={() => setModal(null)} wide>
         <div className="border-b border-border px-6 py-5">
           <h2 className="text-lg font-semibold text-foreground">Add International Buyer</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Complete the buyer application. A secure QR code and access code are generated on save.
+            Complete the application. Publish to issue a QR + access code, or save as a draft for later.
           </p>
         </div>
         <div className="p-6">
           <CrpForm
             sections={formSections}
-            submitLabel="Save Buyer & Generate QR"
-            onSubmit={handleAdd}
+            submitLabel="Save & Publish"
+            draftLabel="Save as Draft"
+            onSubmit={handleAddPublish}
+            onDraft={handleAddDraft}
             onCancel={() => setModal(null)}
           />
         </div>
       </Modal>
 
-      {/* Saved — show QR */}
+      {/* Edit */}
+      <Modal open={modal?.mode === "edit"} onClose={() => setModal(null)} wide>
+        {modal?.mode === "edit" ? (
+          <>
+            <div className="border-b border-border px-6 py-5">
+              <h2 className="text-lg font-semibold text-foreground">Edit Buyer — {modal.buyer.fields.legalName}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {modal.buyer.status === "draft"
+                  ? "This buyer is a draft. Publish to make the QR profile visible to exporters."
+                  : "Update buyer details. Changes apply immediately to the unlocked QR profile."}
+              </p>
+            </div>
+            <div className="p-6">
+              <CrpForm
+                sections={formSections}
+                initial={modal.buyer.fields}
+                submitLabel={modal.buyer.status === "draft" ? "Publish Buyer" : "Save Changes"}
+                draftLabel={modal.buyer.status === "draft" ? "Save Draft" : undefined}
+                onSubmit={handleEditPublish}
+                onDraft={modal.buyer.status === "draft" ? handleEditSave : undefined}
+                onCancel={() => setModal(null)}
+              />
+            </div>
+          </>
+        ) : null}
+      </Modal>
+
+      {/* Saved */}
       <Modal open={modal?.mode === "saved"} onClose={() => setModal(null)}>
         {modal?.mode === "saved" ? (
           <div className="flex flex-col items-center p-8 text-center">
             <div className="flex size-12 items-center justify-center rounded-full bg-emerald-100">
               <CheckCircle2 className="size-6 text-emerald-600" />
             </div>
-            <h2 className="mt-4 text-lg font-semibold text-foreground">Buyer Profile Created</h2>
+            <h2 className="mt-4 text-lg font-semibold text-foreground">Buyer Published</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {modal.buyer.fields.legalName} — {modal.buyer.fields.country}
             </p>
-
             <div className="mt-6">
-              <FakeQR value={`EXIM-CRP|${modal.buyer.id}|${modal.buyer.accessCode}`} size={220} />
+              <RealQR value={publicProfileUrl(modal.buyer.id)} size={220} />
             </div>
-
             <div className="mt-5 flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-4 py-2.5">
               <KeyRound className="size-4 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Access Code</span>
@@ -195,12 +325,9 @@ export function BuyersPage() {
                 {modal.buyer.accessCode}
               </span>
             </div>
-
             <p className="mt-4 max-w-xs text-xs leading-relaxed text-muted-foreground">
-              Share this QR code and access code with the exporter. The profile unlocks in the Exporter Portal
-              only after scanning the QR and entering the access code.
+              Share the QR code and access code with the exporter to unlock the profile in the Exporter Portal.
             </p>
-
             <Button className="mt-6 w-full" onClick={() => setModal(null)}>
               Done
             </Button>
@@ -208,7 +335,7 @@ export function BuyersPage() {
         ) : null}
       </Modal>
 
-      {/* View buyer */}
+      {/* View */}
       <Modal open={modal?.mode === "view"} onClose={() => setModal(null)} wide>
         {modal?.mode === "view" ? (
           <div>
@@ -229,9 +356,8 @@ export function BuyersPage() {
                   </p>
                 </div>
                 <div className="flex flex-col items-center gap-2">
-                  <FakeQR value={`EXIM-CRP|${modal.buyer.id}|${modal.buyer.accessCode}`} size={120} />
+                  <RealQR value={publicProfileUrl(modal.buyer.id)} size={120} />
                   <Badge variant="outline" className="font-mono">
-                    <QrCode className="size-3" />
                     {modal.buyer.accessCode}
                   </Badge>
                 </div>
@@ -244,15 +370,17 @@ export function BuyersPage() {
               />
 
               <div className="flex justify-end gap-3 border-t border-border pt-4">
-                <Button
-                  variant="outline"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => handleDelete(modal.buyer.id)}
-                >
-                  <Trash2 className="size-4" />
-                  Delete Buyer
+                <Button variant="outline" onClick={() => setModal({ mode: "edit", buyer: modal.buyer })}>
+                  <Pencil className="size-4" />
+                  Edit
                 </Button>
-                <Button onClick={() => setModal(null)}>Close</Button>
+                {modal.buyer.status === "draft" ? (
+                  <Button onClick={() => handlePublishFromRow(modal.buyer.id)}>
+                    <Send className="size-4" />
+                    Publish
+                  </Button>
+                ) : null}
+                <Button variant="ghost" onClick={() => setModal(null)}>Close</Button>
               </div>
             </div>
           </div>

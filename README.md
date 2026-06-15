@@ -1,8 +1,8 @@
 # EXIM Bank Pakistan — Credit Ratings Portal
 
-A static demo of the **Pak-EXIM Credit Rating Service**: EXIM Bank staff register international buyers and Pakistani exporters, assign A–D credit ratings, and issue QR-secured buyer profiles that exporters unlock with an access code.
+The **Pak-EXIM Credit Rating Service**: EXIM Bank staff register international buyers and Pakistani exporters, assign A–D credit ratings, and issue QR-secured buyer profiles that exporters unlock with an access code.
 
-All data lives in **browser localStorage** — no backend or database.
+All data lives in **browser localStorage** — no backend or database required.
 
 ## Run it
 
@@ -13,7 +13,7 @@ npm run dev
 
 Open http://localhost:3000.
 
-## Demo logins
+## Sign-in credentials
 
 | Portal   | Email                  | Password    |
 | -------- | ---------------------- | ----------- |

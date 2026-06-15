@@ -8,14 +8,14 @@ import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Modal } from "@/components/modal"
-import { FakeQR } from "@/components/qr-code"
+import { RealQR } from "@/components/real-qr"
 import { BuyerProfile } from "@/components/buyer-profile"
 import {
   addScan,
   clearSession,
   findTemplate,
   getSession,
-  loadBuyers,
+  loadPublishedBuyers,
   ratingOf,
   type BuyerRecord,
   type Session,
@@ -32,6 +32,11 @@ import {
 } from "lucide-react"
 
 type Step = "qr" | "code" | "profile"
+
+function publicProfileUrl(id: string): string {
+  if (typeof window === "undefined") return `/p/${id}`
+  return `${window.location.origin}/p/${id}`
+}
 
 export function ExporterApp() {
   const router = useRouter()
@@ -52,7 +57,7 @@ export function ExporterApp() {
       return
     }
     setSession(s)
-    setBuyers(loadBuyers())
+    setBuyers(loadPublishedBuyers())
     setReady(true)
   }, [router])
 
@@ -201,7 +206,7 @@ export function ExporterApp() {
               <p className="text-sm text-muted-foreground">{active.fields.country}</p>
 
               <div className="relative mt-6">
-                <FakeQR value={`EXIM-CRP|${active.id}|${active.accessCode}`} size={230} />
+                <RealQR value={publicProfileUrl(active.id)} size={230} />
                 <div className="pointer-events-none absolute inset-x-0 top-1/2 h-0.5 animate-pulse bg-emerald-400/70" />
               </div>
 
@@ -258,7 +263,7 @@ export function ExporterApp() {
                     onClick={() => setShowHint((v) => !v)}
                     className="mt-3 w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
                   >
-                    Forgot the code? (demo hint)
+                    Forgot the code? Show hint
                   </button>
                   {showHint ? (
                     <p className="mt-2 text-center font-mono text-sm font-bold tracking-wider text-foreground">

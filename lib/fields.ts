@@ -17,6 +17,15 @@ export type SectionDef = {
   fields: FieldDef[]
 }
 
+/** Find a field definition by its key across all buyer sections. */
+export function findBuyerField(key: string): FieldDef | undefined {
+  for (const s of BUYER_SECTIONS) {
+    const f = s.fields.find((x) => x.key === key)
+    if (f) return f
+  }
+  return undefined
+}
+
 /* ------------------------------------------------------------------ */
 /* International Buyer — application form                              */
 /* ------------------------------------------------------------------ */
@@ -164,6 +173,7 @@ export const EXPORTER_SECTIONS: SectionDef[] = [
       { key: "strn", label: "STRN", placeholder: "Sales Tax Registration Number" },
       { key: "secpCuin", label: "SECP CUIN", placeholder: "Incorporation number (if company)" },
       { key: "cnicDirectors", label: "CNIC of Proprietor / Directors", placeholder: "xxxxx-xxxxxxx-x" },
+      { key: "passportNumber", label: "Passport Number (Proprietor / Authorised Signatory)", placeholder: "e.g. AB1234567" },
       { key: "chamberMembership", label: "Chamber / Association Membership", placeholder: "e.g. KCCI, APTMA" },
       { key: "webocId", label: "WeBOC / PSW Exporter Code" },
       { key: "tdapReg", label: "TDAP / REX Registration No." },
@@ -258,8 +268,8 @@ export const EXPORTER_SECTIONS: SectionDef[] = [
         options: ["PKR", "USD", "EUR", "GBP"],
       },
       {
-        key: "status",
-        label: "Status",
+        key: "facilityStatus",
+        label: "Facility Status",
         type: "select",
         options: ["Active", "Inactive"],
       },

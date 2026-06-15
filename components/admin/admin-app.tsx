@@ -46,7 +46,7 @@ export function AdminApp() {
     <div className="flex h-svh bg-secondary">
       <Sidebar current={page} onNavigate={setPage} onLogout={handleLogout} perms={session.perms} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar page={page} session={session} />
+        <Topbar page={page} session={session} onNavigate={setPage} onLogout={handleLogout} />
         <main className="flex-1 overflow-y-auto p-6">
           {page === "dashboard" && <DashboardPage />}
           {page === "buyers" && <BuyersPage />}

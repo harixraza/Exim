@@ -4,16 +4,22 @@ import type { Rating } from "@/lib/crp-data"
 /* Types                                                               */
 /* ------------------------------------------------------------------ */
 
+export type RecordStatus = "draft" | "published"
+
 export type BuyerRecord = {
   id: string
   createdAt: string
+  publishedAt?: string
   accessCode: string
+  status: RecordStatus
   fields: Record<string, string>
 }
 
 export type ExporterRecord = {
   id: string
   createdAt: string
+  publishedAt?: string
+  status: RecordStatus
   fields: Record<string, string>
 }
 
@@ -33,15 +39,25 @@ export type RoleDef = {
   builtIn?: boolean
 }
 
+export type TemplateAccent = "navy" | "emerald" | "slate" | "purple" | "amber"
+
 export type TemplateDef = {
   id: string
   name: string
   description: string
-  accent: "navy" | "emerald" | "slate"
-  /** titles from BUYER_SECTIONS to show on the unlocked QR profile */
-  sections: string[]
+  accent: TemplateAccent
+  /** legacy — section titles. Read-only, used to derive `fields` if missing. */
+  sections?: string[]
+  /** field keys (from BUYER_SECTIONS) shown on the unlocked QR profile */
+  fields: string[]
+  showHeader: boolean
+  showRatingBlock: boolean
   showNotes: boolean
   showValidity: boolean
+  showAccessCode: boolean
+  showTemplateBadge: boolean
+  /** density of the field grid */
+  density: "comfortable" | "compact"
   updatedAt: string
   builtIn?: boolean
 }
@@ -162,7 +178,9 @@ const SEED_BUYERS: BuyerRecord[] = [
   {
     id: "b1",
     createdAt: "2026-05-02T10:00:00.000Z",
+    publishedAt: "2026-05-02T11:00:00.000Z",
     accessCode: "EXIM-4821",
+    status: "published",
     fields: {
       legalName: "Helmsworth Trading Co.",
       tradingName: "Helmsworth",
@@ -201,7 +219,9 @@ const SEED_BUYERS: BuyerRecord[] = [
   {
     id: "b2",
     createdAt: "2026-05-10T10:00:00.000Z",
+    publishedAt: "2026-05-10T11:00:00.000Z",
     accessCode: "EXIM-9137",
+    status: "published",
     fields: {
       legalName: "Nordwind Imports GmbH",
       country: "Germany",
@@ -221,7 +241,9 @@ const SEED_BUYERS: BuyerRecord[] = [
   {
     id: "b3",
     createdAt: "2026-05-14T10:00:00.000Z",
+    publishedAt: "2026-05-14T11:00:00.000Z",
     accessCode: "EXIM-3358",
+    status: "published",
     fields: {
       legalName: "Sahara Goods LLC",
       country: "United Arab Emirates",
@@ -240,7 +262,9 @@ const SEED_BUYERS: BuyerRecord[] = [
   {
     id: "b4",
     createdAt: "2026-05-20T10:00:00.000Z",
+    publishedAt: "2026-05-20T11:00:00.000Z",
     accessCode: "EXIM-6604",
+    status: "published",
     fields: {
       legalName: "Pacific Rim Distributors",
       country: "Singapore",
@@ -260,7 +284,9 @@ const SEED_BUYERS: BuyerRecord[] = [
   {
     id: "b5",
     createdAt: "2026-05-26T10:00:00.000Z",
+    publishedAt: "2026-05-26T11:00:00.000Z",
     accessCode: "EXIM-2279",
+    status: "published",
     fields: {
       legalName: "Andes Mercado SA",
       country: "Peru",
@@ -279,7 +305,9 @@ const SEED_BUYERS: BuyerRecord[] = [
   {
     id: "b6",
     createdAt: "2026-06-01T10:00:00.000Z",
+    publishedAt: "2026-06-01T11:00:00.000Z",
     accessCode: "EXIM-7815",
+    status: "published",
     fields: {
       legalName: "Volga Retail Group",
       country: "Russia",
@@ -295,18 +323,41 @@ const SEED_BUYERS: BuyerRecord[] = [
       ratingNotes: "High risk profile. Multiple defaults recorded. Trade with caution or secured terms only.",
     },
   },
+  {
+    id: "b7",
+    createdAt: "2026-06-08T10:00:00.000Z",
+    accessCode: "EXIM-1102",
+    status: "draft",
+    fields: {
+      legalName: "Cordoba Mercantil SA",
+      country: "Argentina",
+      legalForm: "Public Limited",
+      regTaxId: "AR-30-71044562-9",
+      industry: "Grain & Agro Imports",
+      address: "Av. Corrientes 880, Buenos Aires C1043, Argentina",
+      sanctionsStatus: "Pending",
+      currency: "USD",
+      template: "Standard Buyer Profile",
+      rating: "C",
+      validUntil: "2026-12-31",
+      ratingNotes: "Awaiting financial statements from buyer. Preliminary rating subject to revision.",
+    },
+  },
 ]
 
 const SEED_EXPORTERS: ExporterRecord[] = [
   {
     id: "e1",
     createdAt: "2026-04-18T10:00:00.000Z",
+    publishedAt: "2026-04-18T11:00:00.000Z",
+    status: "published",
     fields: {
       legalName: "Crescent Textiles Ltd.",
       businessForm: "Private Limited",
       ntn: "4820193-7",
       strn: "12-00-9800-221-64",
       secpCuin: "0061244",
+      passportNumber: "AB2937481",
       chamberMembership: "APTMA / FCCI",
       sector: "Textiles",
       yearEstablished: "1988",
@@ -319,67 +370,95 @@ const SEED_EXPORTERS: ExporterRecord[] = [
       taxFilerStatus: "Filer",
       sanctionsDeclaration: "Yes",
       productApplied: "Trade Credit Insurance",
-      status: "Active",
+      facilityStatus: "Active",
     },
   },
   {
     id: "e2",
     createdAt: "2026-04-25T10:00:00.000Z",
+    publishedAt: "2026-04-25T11:00:00.000Z",
+    status: "published",
     fields: {
       legalName: "GreenLeaf Exports",
       businessForm: "Partnership (AOP)",
       ntn: "1029384-2",
+      passportNumber: "CD1823945",
       sector: "Agriculture",
       address: "Multan Road, Lahore, Punjab",
       ecibConsent: "Yes",
       taxFilerStatus: "Filer",
       productApplied: "E-EFS",
-      status: "Active",
+      facilityStatus: "Active",
     },
   },
   {
     id: "e3",
     createdAt: "2026-05-05T10:00:00.000Z",
+    publishedAt: "2026-05-05T11:00:00.000Z",
+    status: "published",
     fields: {
       legalName: "Indus Leather Works",
       businessForm: "Private Limited",
       ntn: "5567281-9",
+      passportNumber: "EF3429187",
       sector: "Leather",
       address: "Korangi Industrial Area, Karachi, Sindh",
       ecibConsent: "Yes",
       taxFilerStatus: "Filer",
       productApplied: "Working Capital Finance",
-      status: "Active",
+      facilityStatus: "Active",
     },
   },
   {
     id: "e4",
     createdAt: "2026-05-12T10:00:00.000Z",
+    publishedAt: "2026-05-12T11:00:00.000Z",
+    status: "published",
     fields: {
       legalName: "Summit Rice Traders",
       businessForm: "Private Limited",
       ntn: "9988776-5",
+      passportNumber: "GH7823014",
       sector: "Food & Grain",
       address: "Port Qasim, Karachi, Sindh",
       ecibConsent: "Yes",
       taxFilerStatus: "Filer",
       productApplied: "Buyer Credit",
-      status: "Active",
+      facilityStatus: "Active",
     },
   },
   {
     id: "e5",
     createdAt: "2026-05-30T10:00:00.000Z",
+    publishedAt: "2026-05-30T11:00:00.000Z",
+    status: "published",
     fields: {
       legalName: "Karachi Surgical Co.",
       businessForm: "Sole Proprietorship",
       ntn: "3344556-1",
+      passportNumber: "IJ5612983",
       sector: "Surgical Instruments",
       address: "Small Industrial Estate, Sialkot, Punjab",
       ecibConsent: "No",
       taxFilerStatus: "Filer",
       productApplied: "Trade Credit Insurance",
-      status: "Inactive",
+      facilityStatus: "Inactive",
+    },
+  },
+  {
+    id: "e6",
+    createdAt: "2026-06-08T10:00:00.000Z",
+    status: "draft",
+    fields: {
+      legalName: "Multan Mango Mills",
+      businessForm: "Private Limited",
+      ntn: "8821345-3",
+      sector: "Food & Grain",
+      address: "Industrial Zone, Multan, Punjab",
+      ecibConsent: "Yes",
+      taxFilerStatus: "Filer",
+      productApplied: "E-EFS",
+      facilityStatus: "Active",
     },
   },
 ]
@@ -451,9 +530,21 @@ const SEED_TEMPLATES: TemplateDef[] = [
     name: "Standard Buyer Profile",
     description: "Default layout covering buyer identity, business risk and the trade relationship.",
     accent: "navy",
-    sections: ["Identification", "Business & Risk Profile", "Transaction Details"],
+    fields: [
+      // Identification
+      "legalName", "tradingName", "country", "legalForm", "regTaxId", "yearEstablished", "website", "industry", "address",
+      // Business & Risk Profile
+      "endMarkets", "existingRatings", "sanctionsStatus", "mainProducts", "topCustomers",
+      // Transaction Details
+      "linkedExporter", "proposedCreditLimit", "paymentTerms", "tenor", "hsCode", "tradeHistory",
+    ],
+    showHeader: true,
+    showRatingBlock: true,
     showNotes: true,
     showValidity: true,
+    showAccessCode: false,
+    showTemplateBadge: true,
+    density: "comfortable",
     updatedAt: "2026-06-02T10:00:00.000Z",
     builtIn: true,
   },
@@ -462,15 +553,20 @@ const SEED_TEMPLATES: TemplateDef[] = [
     name: "High-Volume Importer",
     description: "Extended profile with full financials, ownership and governance for large buyers.",
     accent: "emerald",
-    sections: [
-      "Identification",
-      "Ownership & Governance",
-      "Financial Information (Latest FY)",
-      "Business & Risk Profile",
-      "Transaction Details",
+    fields: [
+      "legalName", "tradingName", "country", "legalForm", "regTaxId", "lei", "duns", "yearEstablished", "website", "industry", "address",
+      "parentCompany", "ubo", "listingStatus", "auditor", "regulator", "keyManagement", "shareholding",
+      "currency", "accountingStandard", "fyEndDate", "revenue", "ebitda", "netIncome", "totalAssets", "totalEquity", "totalDebt", "cashEquivalents", "auditorOpinion",
+      "endMarkets", "existingRatings", "sanctionsStatus", "mainProducts", "topCustomers", "litigation",
+      "linkedExporter", "proposedCreditLimit", "paymentTerms", "tenor", "hsCode", "tradeHistory", "bankReferences",
     ],
+    showHeader: true,
+    showRatingBlock: true,
     showNotes: true,
     showValidity: true,
+    showAccessCode: true,
+    showTemplateBadge: true,
+    density: "comfortable",
     updatedAt: "2026-05-21T10:00:00.000Z",
     builtIn: true,
   },
@@ -479,15 +575,20 @@ const SEED_TEMPLATES: TemplateDef[] = [
     name: "New / Unrated Buyer",
     description: "Lightweight provisional profile for first-time buyers with limited credit history.",
     accent: "slate",
-    sections: ["Identification"],
+    fields: ["legalName", "country", "legalForm", "regTaxId", "industry", "address", "linkedExporter", "paymentTerms"],
+    showHeader: true,
+    showRatingBlock: true,
     showNotes: true,
     showValidity: true,
+    showAccessCode: false,
+    showTemplateBadge: false,
+    density: "compact",
     updatedAt: "2026-04-14T10:00:00.000Z",
     builtIn: true,
   },
 ]
 
-/** Demo scan history spread over the last ~30 days. */
+/** Seed scan history spread over the last ~30 days. */
 function makeSeedScans(): ScanRecord[] {
   const exporterIdentities = [
     { name: "Faisal Mahmood", email: "exporter@crescent.pk", company: "Crescent Textiles Ltd." },
@@ -556,9 +657,75 @@ export function resetDemoData() {
 /* CRUD                                                                */
 /* ------------------------------------------------------------------ */
 
+function normalizeBuyer(b: BuyerRecord): BuyerRecord {
+  return { ...b, status: b.status ?? "published" }
+}
+
+function normalizeExporter(e: ExporterRecord): ExporterRecord {
+  return { ...e, status: e.status ?? "published" }
+}
+
+const ALL_BUYER_FIELD_KEYS = [
+  "legalName", "tradingName", "country", "legalForm", "regTaxId", "lei", "duns", "yearEstablished", "website", "industry", "address",
+  "parentCompany", "ubo", "listingStatus", "auditor", "regulator", "keyManagement", "shareholding",
+  "currency", "accountingStandard", "fyEndDate", "revenue", "ebitda", "netIncome", "totalAssets", "totalEquity", "totalDebt", "cashEquivalents", "auditorOpinion",
+  "endMarkets", "existingRatings", "sanctionsStatus", "mainProducts", "topCustomers", "litigation",
+  "linkedExporter", "proposedCreditLimit", "paymentTerms", "tenor", "hsCode", "tradeHistory", "bankReferences",
+]
+
+function normalizeTemplate(t: TemplateDef): TemplateDef {
+  return {
+    ...t,
+    fields: t.fields ?? ALL_BUYER_FIELD_KEYS.slice(),
+    showHeader: t.showHeader ?? true,
+    showRatingBlock: t.showRatingBlock ?? true,
+    showNotes: t.showNotes ?? true,
+    showValidity: t.showValidity ?? true,
+    showAccessCode: t.showAccessCode ?? false,
+    showTemplateBadge: t.showTemplateBadge ?? true,
+    density: t.density ?? "comfortable",
+  }
+}
+
 export function loadBuyers(): BuyerRecord[] {
   seedIfNeeded()
-  return read<BuyerRecord[]>(KEYS.buyers, [])
+  return read<BuyerRecord[]>(KEYS.buyers, []).map(normalizeBuyer)
+}
+
+export function loadPublishedBuyers(): BuyerRecord[] {
+  return loadBuyers().filter((b) => b.status === "published")
+}
+
+export function publishBuyer(id: string) {
+  setBuyerStatus(id, "published")
+}
+
+export function publishExporter(id: string) {
+  setExporterStatus(id, "published")
+}
+
+export function setBuyerStatus(id: string, status: RecordStatus) {
+  const list = loadBuyers()
+  const i = list.findIndex((b) => b.id === id)
+  if (i < 0) return
+  list[i] = {
+    ...list[i],
+    status,
+    publishedAt: status === "published" ? list[i].publishedAt ?? new Date().toISOString() : list[i].publishedAt,
+  }
+  write(KEYS.buyers, list)
+}
+
+export function setExporterStatus(id: string, status: RecordStatus) {
+  const list = loadExporters()
+  const i = list.findIndex((e) => e.id === id)
+  if (i < 0) return
+  list[i] = {
+    ...list[i],
+    status,
+    publishedAt: status === "published" ? list[i].publishedAt ?? new Date().toISOString() : list[i].publishedAt,
+  }
+  write(KEYS.exporters, list)
 }
 
 export function saveBuyer(record: BuyerRecord) {
@@ -578,7 +745,7 @@ export function deleteBuyer(id: string) {
 
 export function loadExporters(): ExporterRecord[] {
   seedIfNeeded()
-  return read<ExporterRecord[]>(KEYS.exporters, [])
+  return read<ExporterRecord[]>(KEYS.exporters, []).map(normalizeExporter)
 }
 
 export function saveExporter(record: ExporterRecord) {
@@ -638,7 +805,7 @@ export function deleteRole(id: string) {
 
 export function loadTemplates(): TemplateDef[] {
   seedIfNeeded()
-  return read<TemplateDef[]>(KEYS.templates, [])
+  return read<TemplateDef[]>(KEYS.templates, []).map(normalizeTemplate)
 }
 
 export function saveTemplate(t: TemplateDef) {
@@ -676,9 +843,12 @@ export function addScan(scan: Omit<ScanRecord, "id" | "time">) {
 /* Auth / session                                                      */
 /* ------------------------------------------------------------------ */
 
-export function authenticate(email: string, password: string, type: "exim" | "exporter"): Session | null {
+export function authenticate(email: string, password: string, type?: "exim" | "exporter"): Session | null {
   const user = loadUsers().find(
-    (u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password && u.type === type,
+    (u) =>
+      u.email.toLowerCase() === email.trim().toLowerCase() &&
+      u.password === password &&
+      (type ? u.type === type : true),
   )
   if (!user) return null
   const session: Session = {

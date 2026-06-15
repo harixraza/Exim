@@ -6,19 +6,15 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card } from "@/components/ui/card"
 import { authenticate, getSession, seedIfNeeded } from "@/lib/store"
-import { Landmark, Ship, QrCode, ShieldCheck, Users, AlertCircle } from "lucide-react"
-import { cn } from "@/lib/utils"
-
-type LoginTab = "exim" | "exporter"
+import { AlertCircle, ArrowRight, Lock } from "lucide-react"
 
 export default function LandingPage() {
   const router = useRouter()
-  const [tab, setTab] = useState<LoginTab>("exim")
-  const [email, setEmail] = useState("admin@exim.gov")
-  const [password, setPassword] = useState("admin123")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     seedIfNeeded()
@@ -26,176 +22,224 @@ export default function LandingPage() {
     if (session) router.replace(session.type === "exim" ? "/admin" : "/exporter")
   }, [router])
 
-  function switchTab(next: LoginTab) {
-    setTab(next)
-    setError("")
-    setEmail(next === "exim" ? "admin@exim.gov" : "exporter@crescent.pk")
-    setPassword(next === "exim" ? "admin123" : "exporter123")
-  }
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const session = authenticate(email, password, tab)
+    setLoading(true)
+    const session = authenticate(email, password)
     if (!session) {
-      setError("Invalid credentials for this portal. Please check email, password and portal type.")
+      setError("Invalid email or password. Please try again.")
+      setLoading(false)
       return
     }
     router.push(session.type === "exim" ? "/admin" : "/exporter")
   }
 
   return (
-    <main className="min-h-svh bg-[radial-gradient(ellipse_at_top_left,_oklch(0.36_0.11_255_/_0.12),_transparent_55%),radial-gradient(ellipse_at_bottom_right,_oklch(0.55_0.12_200_/_0.12),_transparent_55%)] bg-background">
-      {/* Top bar */}
-      <header className="flex items-center justify-between px-6 py-4 sm:px-10">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-white px-3 py-1.5 shadow-sm ring-1 ring-border">
-            <img src="/images/exim-logo.png" alt="EXIM — Export-Import Bank of Pakistan" className="h-8 w-auto" />
-          </div>
-        </div>
-        <p className="hidden text-xs text-muted-foreground sm:block">Government of Pakistan — Development Finance Institution</p>
-      </header>
+    <main className="min-h-svh bg-background">
+      <div className="grid min-h-svh lg:grid-cols-[1.05fr_1fr]">
+        {/* ============================================================== */}
+        {/* Brand panel                                                    */}
+        {/* ============================================================== */}
+        <section className="relative hidden overflow-hidden bg-[oklch(0.2_0.07_255)] lg:flex lg:flex-col">
+          {/* dotted texture */}
+          <div
+            aria-hidden
+            className="absolute inset-0 opacity-[0.06]"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+              backgroundSize: "26px 26px",
+            }}
+          />
+          {/* gradient accents */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -left-40 -top-40 size-[28rem] rounded-full bg-[oklch(0.55_0.16_200)]/25 blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-44 -right-44 size-[30rem] rounded-full bg-[oklch(0.4_0.2_265)]/35 blur-3xl"
+          />
 
-      <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 pb-16 pt-6 lg:grid-cols-2 lg:gap-16 sm:px-10">
-        {/* Branding panel */}
-        <section className="relative overflow-hidden rounded-3xl bg-[oklch(0.25_0.07_255)] p-8 text-white shadow-xl sm:p-10">
-          <div className="pointer-events-none absolute -right-20 -top-20 size-72 rounded-full bg-[oklch(0.55_0.12_200)]/20 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -left-16 size-72 rounded-full bg-[oklch(0.45_0.13_255)]/30 blur-3xl" />
-
-          <div className="relative">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs">
-              <ShieldCheck className="size-3.5" />
-              Pak-EXIM Credit Rating Service
+          <div className="relative flex flex-1 flex-col px-12 py-10 xl:px-20 xl:py-12">
+            {/* Top government banner */}
+            <div className="flex items-center gap-4">
+              <div className="h-px flex-1 bg-white/15" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/70">
+                Government of Pakistan
+              </span>
+              <div className="h-px flex-1 bg-white/15" />
             </div>
 
-            <h1 className="mt-5 text-balance text-3xl font-bold leading-tight sm:text-4xl">
-              Credit Ratings Portal
-            </h1>
-            <p className="mt-3 max-w-md text-pretty text-sm leading-relaxed text-white/75">
-              Verified credit ratings of international buyers for Pakistani exporters. Scan a buyer&apos;s QR code
-              at the expo floor and make confident export decisions instantly.
-            </p>
-
-            <div className="mt-8 flex flex-col gap-4">
-              <Feature icon={QrCode} title="Scan QR Codes" desc="Each rated buyer gets a secure QR code linked to their credit profile." />
-              <Feature icon={ShieldCheck} title="Verified Ratings" desc="Clear A–D ratings assigned by EXIM Bank, backed by trade history." />
-              <Feature icon={Users} title="Approved Access" desc="Profiles unlock only with the access code issued by EXIM Bank." />
+            {/* Logo presentation */}
+            <div className="mt-14 flex flex-col items-center xl:mt-16">
+              <div className="relative">
+                {/* soft floor glow */}
+                <div
+                  aria-hidden
+                  className="absolute -inset-x-2 -bottom-4 h-20 rounded-full bg-black/45 blur-2xl"
+                />
+                {/* main plate */}
+                <div
+                  className="relative rounded-[1.5rem] bg-gradient-to-br from-white via-white to-[oklch(0.96_0.015_245)] px-14 py-10"
+                  style={{
+                    boxShadow:
+                      "0 32px 80px -20px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.15), inset 0 1px 0 rgba(255,255,255,1)",
+                  }}
+                >
+                  <img
+                    src="/images/exim-logo.png"
+                    alt="EXIM — Export-Import Bank of Pakistan"
+                    className="mx-auto h-28 w-auto xl:h-32"
+                  />
+                </div>
+              </div>
+              <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.4em] text-white/45">
+                Export-Import Bank of Pakistan
+              </p>
             </div>
 
-            <div className="mt-10 rounded-xl bg-white p-3 shadow-lg ring-1 ring-white/30 sm:max-w-xs">
-              <img src="/images/exim-logo.png" alt="Export-Import Bank of Pakistan" className="mx-auto h-12 w-auto" />
+            {/* Hero copy */}
+            <div className="mt-14 text-center">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-white/55">
+                Pak-EXIM Credit Rating Service
+              </p>
+              <h1 className="mt-5 text-balance text-4xl font-bold leading-[1.1] tracking-tight text-white xl:text-[3.25rem]">
+                Credit Ratings Portal
+              </h1>
+              <p className="mx-auto mt-5 max-w-md text-balance text-[15px] leading-relaxed text-white/65">
+                Verified credit ratings of international buyers, issued by the
+                Export-Import Bank of Pakistan for Pakistani exporters.
+              </p>
+            </div>
+
+            {/* Footer institutional bar */}
+            <div className="mt-auto pt-12">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm">
+                <div className="grid grid-cols-2 divide-x divide-white/10">
+                  <div className="px-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-white/45">
+                      Regulator
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-white/90">
+                      State Bank of Pakistan
+                    </p>
+                  </div>
+                  <div className="px-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-white/45">
+                      Classification
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-white/90">
+                      Development Finance Institution
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <p className="mt-5 text-center text-[11px] tracking-wide text-white/35">
+                © {new Date().getFullYear()} Export-Import Bank of Pakistan. All rights reserved.
+              </p>
             </div>
           </div>
         </section>
 
-        {/* Login panel */}
-        <section className="w-full">
-          <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
-            <TabButton active={tab === "exim"} onClick={() => switchTab("exim")} icon={Landmark} label="EXIM Bank Login" />
-            <TabButton active={tab === "exporter"} onClick={() => switchTab("exporter")} icon={Ship} label="Exporter Login" />
-          </div>
-
-          <Card className="p-6 sm:p-8">
-            <h2 className="text-lg font-semibold text-foreground">
-              {tab === "exim" ? "EXIM Bank — Admin Console" : "Exporter Portal"}
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {tab === "exim"
-                ? "Manage buyer ratings, exporters, users and permissions."
-                : "View international buyer profiles and unlock credit ratings via QR."}
-            </p>
-
-            <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        {/* ============================================================== */}
+        {/* Sign-in panel                                                  */}
+        {/* ============================================================== */}
+        <section className="flex items-center justify-center px-6 py-12 sm:px-12">
+          <div className="w-full max-w-sm">
+            {/* Mobile logo */}
+            <div className="mb-10 flex justify-center lg:hidden">
+              <div className="rounded-xl bg-white px-6 py-5 shadow-sm ring-1 ring-border">
+                <img
+                  src="/images/exim-logo.png"
+                  alt="EXIM — Export-Import Bank of Pakistan"
+                  className="h-14 w-auto"
+                />
               </div>
+            </div>
+
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-primary">
+                EXIM Bank
+              </p>
+              <h2 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
+                Sign in
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Access the Credit Ratings Portal admin console.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="mt-9 flex flex-col gap-5">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                  Email address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@exim.gov"
+                  autoComplete="email"
+                  required
+                  className="h-11 text-[15px]"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="password" className="text-sm font-medium text-foreground">
+                  Password
+                </Label>
                 <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
                   required
+                  className="h-11 text-[15px]"
                 />
               </div>
 
               {error ? (
-                <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                  <AlertCircle className="size-4 shrink-0" />
-                  {error}
+                <div
+                  role="alert"
+                  className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700"
+                >
+                  <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                  <span>{error}</span>
                 </div>
               ) : null}
 
-              <Button type="submit" className="mt-1 w-full">
-                {tab === "exim" ? "Login to Admin Console" : "Login to Exporter Portal"}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="mt-2 h-11 w-full text-[15px] font-semibold"
+              >
+                {loading ? "Signing in…" : "Sign in"}
+                {!loading ? <ArrowRight className="size-4" /> : null}
               </Button>
             </form>
 
-            <div className="mt-6 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-              <p className="font-medium text-foreground">Demo credentials</p>
-              <p className="mt-1">
-                EXIM: <span className="font-mono">admin@exim.gov / admin123</span>
-              </p>
-              <p>
-                Exporter: <span className="font-mono">exporter@crescent.pk / exporter123</span>
-              </p>
+            <div className="mt-10 flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
+              <Lock className="size-3" />
+              Secure connection · Authorized users only
             </div>
-          </Card>
 
-          <p className="mt-5 text-center text-xs text-muted-foreground">
-            Authorized users only. All data in this demo is stored locally in your browser.
-          </p>
+            <div className="mt-8 border-t border-border pt-6 text-center text-xs text-muted-foreground">
+              Need access? Contact the{" "}
+              <span className="font-medium text-foreground">EXIM Credit Risk</span> department.
+            </div>
+            <div className="mt-3 text-center text-xs">
+              <a href="/companies" className="font-medium text-primary hover:underline">
+                Browse the public buyer directory →
+              </a>
+            </div>
+          </div>
         </section>
       </div>
     </main>
-  )
-}
-
-function Feature({
-  icon: Icon,
-  title,
-  desc,
-}: {
-  icon: typeof QrCode
-  title: string
-  desc: string
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/20">
-        <Icon className="size-4.5" />
-      </div>
-      <div>
-        <p className="text-sm font-semibold">{title}</p>
-        <p className="text-xs leading-relaxed text-white/70">{desc}</p>
-      </div>
-    </div>
-  )
-}
-
-function TabButton({
-  active,
-  onClick,
-  icon: Icon,
-  label,
-}: {
-  active: boolean
-  onClick: () => void
-  icon: typeof Landmark
-  label: string
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
-        active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
-      )}
-    >
-      <Icon className="size-4" />
-      {label}
-    </button>
   )
 }

@@ -71,13 +71,17 @@ export function CrpForm({
   sections,
   initial,
   submitLabel,
+  draftLabel,
   onSubmit,
+  onDraft,
   onCancel,
 }: {
   sections: SectionDef[]
   initial?: Record<string, string>
   submitLabel: string
+  draftLabel?: string
   onSubmit: (fields: Record<string, string>) => void
+  onDraft?: (fields: Record<string, string>) => void
   onCancel?: () => void
 }) {
   const [fields, setFields] = useState<Record<string, string>>(initial ?? {})
@@ -115,10 +119,15 @@ export function CrpForm({
         </div>
       ))}
 
-      <div className="flex gap-3 border-t border-border pt-4">
+      <div className="sticky bottom-0 -mx-6 -mb-6 flex flex-wrap gap-3 border-t border-border bg-card/95 px-6 py-4 backdrop-blur">
         <Button type="submit">{submitLabel}</Button>
+        {onDraft && draftLabel ? (
+          <Button type="button" variant="outline" onClick={() => onDraft(fields)}>
+            {draftLabel}
+          </Button>
+        ) : null}
         {onCancel ? (
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="ghost" onClick={onCancel}>
             Cancel
           </Button>
         ) : null}
