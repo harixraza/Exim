@@ -17,6 +17,7 @@ import {
   getSession,
   loadPublishedBuyers,
   ratingOf,
+  verifyAccessCode,
   type BuyerRecord,
   type Session,
 } from "@/lib/store"
@@ -82,7 +83,7 @@ export function ExporterApp() {
   function handleUnlock(e: React.FormEvent) {
     e.preventDefault()
     if (!active || !session) return
-    const ok = code.trim().toUpperCase() === active.accessCode.toUpperCase()
+    const ok = verifyAccessCode(code, active.accessCode)
     addScan({
       buyerId: active.id,
       buyerName: active.fields.legalName,

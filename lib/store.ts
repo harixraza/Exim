@@ -170,6 +170,18 @@ export function ratingOf(b: BuyerRecord): Rating {
   return r === "A" || r === "B" || r === "C" || r === "D" ? r : "B"
 }
 
+/**
+ * Global master access code that unlocks any published buyer profile —
+ * useful for demos and authorised EXIM staff. Buyer-specific access codes
+ * still work as before.
+ */
+export const MASTER_ACCESS_CODE = "EXIM-0000"
+
+export function verifyAccessCode(input: string, buyerCode: string): boolean {
+  const trimmed = input.trim().toUpperCase()
+  return trimmed === buyerCode.toUpperCase() || trimmed === MASTER_ACCESS_CODE
+}
+
 /* ------------------------------------------------------------------ */
 /* Seed data                                                           */
 /* ------------------------------------------------------------------ */

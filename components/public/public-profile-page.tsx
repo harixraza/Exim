@@ -13,6 +13,7 @@ import {
   findTemplate,
   loadPublishedBuyers,
   ratingOf,
+  verifyAccessCode,
   type BuyerRecord,
 } from "@/lib/store"
 import {
@@ -40,7 +41,7 @@ export function PublicProfilePage({ id }: { id: string }) {
   function handleUnlock(e: React.FormEvent) {
     e.preventDefault()
     if (!buyer) return
-    const ok = code.trim().toUpperCase() === buyer.accessCode.toUpperCase()
+    const ok = verifyAccessCode(code, buyer.accessCode)
     addScan({
       buyerId: buyer.id,
       buyerName: buyer.fields.legalName,
