@@ -11,11 +11,11 @@ import { PublicShell } from "@/components/public/public-shell"
 import {
   addScan,
   findTemplate,
-  forgetBuyerUnlocked,
-  isBuyerUnlocked,
+  isDeviceUnlocked,
   loadPublishedBuyers,
-  markBuyerUnlocked,
+  lockDevice,
   ratingOf,
+  unlockDevice,
   verifyAccessCode,
   type BuyerRecord,
 } from "@/lib/store"
@@ -40,7 +40,7 @@ export function PublicProfilePage({ id }: { id: string }) {
     const all = loadPublishedBuyers()
     const found = all.find((b) => b.id === id) ?? null
     setBuyer(found)
-    if (found && isBuyerUnlocked(found.id)) setUnlocked(true)
+    if (found && isDeviceUnlocked()) setUnlocked(true)
     setReady(true)
   }, [id])
 
@@ -58,7 +58,7 @@ export function PublicProfilePage({ id }: { id: string }) {
       result: ok ? "unlocked" : "failed",
     })
     if (ok) {
-      markBuyerUnlocked(buyer.id)
+      unlockDevice()
       setUnlocked(true)
       setError(false)
     } else {
@@ -67,8 +67,7 @@ export function PublicProfilePage({ id }: { id: string }) {
   }
 
   function handleLockAgain() {
-    if (!buyer) return
-    forgetBuyerUnlocked(buyer.id)
+    lockDevice()
     setUnlocked(false)
     setCode("")
   }

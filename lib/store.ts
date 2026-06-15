@@ -134,7 +134,7 @@ const KEYS = {
   templates: "crp_templates",
   scans: "crp_scans",
   session: "crp_session",
-  unlocked: "crp_unlocked",
+  deviceUnlocked: "crp_device_unlocked",
   seeded: "crp_seeded_v2",
 }
 
@@ -185,27 +185,21 @@ export function verifyAccessCode(input: string, buyerCode: string): boolean {
 }
 
 /* ------------------------------------------------------------------ */
-/* Remember-unlocked buyers on this device                             */
+/* Device-wide unlock — one successful code unlocks every profile      */
+/* on this browser. Cleared via "Lock this device" or Reset Data.      */
 /* ------------------------------------------------------------------ */
 
-function loadUnlocked(): string[] {
-  return read<string[]>(KEYS.unlocked, [])
+export function isDeviceUnlocked(): boolean {
+  return read<boolean>(KEYS.deviceUnlocked, false) === true
 }
 
-export function isBuyerUnlocked(id: string): boolean {
-  return loadUnlocked().includes(id)
+export function unlockDevice() {
+  write(KEYS.deviceUnlocked, true)
 }
 
-export function markBuyerUnlocked(id: string) {
-  const list = loadUnlocked()
-  if (!list.includes(id)) {
-    list.push(id)
-    write(KEYS.unlocked, list)
-  }
-}
-
-export function forgetBuyerUnlocked(id: string) {
-  write(KEYS.unlocked, loadUnlocked().filter((x) => x !== id))
+export function lockDevice() {
+  if (typeof window === "undefined") return
+  window.localStorage.removeItem(KEYS.deviceUnlocked)
 }
 
 /* ------------------------------------------------------------------ */
