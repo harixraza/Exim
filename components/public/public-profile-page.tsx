@@ -16,6 +16,7 @@ import {
   verifyAccessCode,
   type BuyerRecord,
 } from "@/lib/store"
+import { formatAccessCode } from "@/lib/utils"
 import {
   AlertCircle,
   ArrowLeft,
@@ -147,10 +148,12 @@ export function PublicProfilePage({ id }: { id: string }) {
                 autoFocus
                 value={code}
                 onChange={(e) => {
-                  setCode(e.target.value)
+                  setCode(formatAccessCode(e.target.value))
                   setError(false)
                 }}
-                placeholder="EXIM-0000"
+                placeholder="0000-0000"
+                inputMode="numeric"
+                maxLength={9}
                 className="mt-2 h-12 text-center font-mono text-lg tracking-[0.3em]"
               />
               {error ? (

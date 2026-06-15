@@ -21,6 +21,7 @@ import {
   type BuyerRecord,
   type Session,
 } from "@/lib/store"
+import { formatAccessCode } from "@/lib/utils"
 import {
   Globe,
   Lock,
@@ -242,10 +243,12 @@ export function ExporterApp() {
                     autoFocus
                     value={code}
                     onChange={(e) => {
-                      setCode(e.target.value)
+                      setCode(formatAccessCode(e.target.value))
                       setCodeError(false)
                     }}
-                    placeholder="EXIM-0000"
+                    placeholder="0000-0000"
+                    inputMode="numeric"
+                    maxLength={9}
                     className="mt-2 h-12 text-center font-mono text-lg tracking-[0.3em]"
                   />
                   {codeError ? (

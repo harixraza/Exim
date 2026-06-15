@@ -134,7 +134,7 @@ const KEYS = {
   templates: "crp_templates",
   scans: "crp_scans",
   session: "crp_session",
-  seeded: "crp_seeded_v1",
+  seeded: "crp_seeded_v2",
 }
 
 /* ------------------------------------------------------------------ */
@@ -161,8 +161,9 @@ export function newId(prefix: string) {
 }
 
 export function genAccessCode() {
-  const n = Math.floor(1000 + Math.random() * 9000)
-  return `EXIM-${n}`
+  const a = Math.floor(1000 + Math.random() * 9000)
+  const b = Math.floor(1000 + Math.random() * 9000)
+  return `${a}-${b}`
 }
 
 export function ratingOf(b: BuyerRecord): Rating {
@@ -175,7 +176,7 @@ export function ratingOf(b: BuyerRecord): Rating {
  * useful for demos and authorised EXIM staff. Buyer-specific access codes
  * still work as before.
  */
-export const MASTER_ACCESS_CODE = "EXIM-0000"
+export const MASTER_ACCESS_CODE = "7993-0492"
 
 export function verifyAccessCode(input: string, buyerCode: string): boolean {
   const trimmed = input.trim().toUpperCase()
@@ -191,7 +192,7 @@ const SEED_BUYERS: BuyerRecord[] = [
     id: "b1",
     createdAt: "2026-05-02T10:00:00.000Z",
     publishedAt: "2026-05-02T11:00:00.000Z",
-    accessCode: "EXIM-4821",
+    accessCode: "4821-1996",
     status: "published",
     fields: {
       legalName: "Helmsworth Trading Co.",
@@ -232,7 +233,7 @@ const SEED_BUYERS: BuyerRecord[] = [
     id: "b2",
     createdAt: "2026-05-10T10:00:00.000Z",
     publishedAt: "2026-05-10T11:00:00.000Z",
-    accessCode: "EXIM-9137",
+    accessCode: "9137-2003",
     status: "published",
     fields: {
       legalName: "Nordwind Imports GmbH",
@@ -254,7 +255,7 @@ const SEED_BUYERS: BuyerRecord[] = [
     id: "b3",
     createdAt: "2026-05-14T10:00:00.000Z",
     publishedAt: "2026-05-14T11:00:00.000Z",
-    accessCode: "EXIM-3358",
+    accessCode: "3358-2014",
     status: "published",
     fields: {
       legalName: "Sahara Goods LLC",
@@ -275,7 +276,7 @@ const SEED_BUYERS: BuyerRecord[] = [
     id: "b4",
     createdAt: "2026-05-20T10:00:00.000Z",
     publishedAt: "2026-05-20T11:00:00.000Z",
-    accessCode: "EXIM-6604",
+    accessCode: "6604-2010",
     status: "published",
     fields: {
       legalName: "Pacific Rim Distributors",
@@ -297,7 +298,7 @@ const SEED_BUYERS: BuyerRecord[] = [
     id: "b5",
     createdAt: "2026-05-26T10:00:00.000Z",
     publishedAt: "2026-05-26T11:00:00.000Z",
-    accessCode: "EXIM-2279",
+    accessCode: "2279-2018",
     status: "published",
     fields: {
       legalName: "Andes Mercado SA",
@@ -318,7 +319,7 @@ const SEED_BUYERS: BuyerRecord[] = [
     id: "b6",
     createdAt: "2026-06-01T10:00:00.000Z",
     publishedAt: "2026-06-01T11:00:00.000Z",
-    accessCode: "EXIM-7815",
+    accessCode: "7815-2007",
     status: "published",
     fields: {
       legalName: "Volga Retail Group",
@@ -338,7 +339,7 @@ const SEED_BUYERS: BuyerRecord[] = [
   {
     id: "b7",
     createdAt: "2026-06-08T10:00:00.000Z",
-    accessCode: "EXIM-1102",
+    accessCode: "1102-2022",
     status: "draft",
     fields: {
       legalName: "Cordoba Mercantil SA",
