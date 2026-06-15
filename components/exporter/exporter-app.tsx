@@ -48,7 +48,6 @@ export function ExporterApp() {
   const [step, setStep] = useState<Step>("qr")
   const [code, setCode] = useState("")
   const [codeError, setCodeError] = useState(false)
-  const [showHint, setShowHint] = useState(false)
 
   useEffect(() => {
     const s = getSession()
@@ -74,7 +73,6 @@ export function ExporterApp() {
     setStep("qr")
     setCode("")
     setCodeError(false)
-    setShowHint(false)
   }
 
   function close() {
@@ -258,18 +256,6 @@ export function ExporterApp() {
                   <Button type="submit" className="mt-4 w-full">
                     Unlock Profile
                   </Button>
-                  <button
-                    type="button"
-                    onClick={() => setShowHint((v) => !v)}
-                    className="mt-3 w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
-                  >
-                    Forgot the code? Show hint
-                  </button>
-                  {showHint ? (
-                    <p className="mt-2 text-center font-mono text-sm font-bold tracking-wider text-foreground">
-                      {active.accessCode}
-                    </p>
-                  ) : null}
                 </div>
               </form>
             </div>

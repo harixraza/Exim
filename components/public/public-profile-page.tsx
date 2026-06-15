@@ -30,7 +30,6 @@ export function PublicProfilePage({ id }: { id: string }) {
   const [unlocked, setUnlocked] = useState(false)
   const [code, setCode] = useState("")
   const [error, setError] = useState(false)
-  const [hint, setHint] = useState(false)
 
   useEffect(() => {
     const all = loadPublishedBuyers()
@@ -162,18 +161,6 @@ export function PublicProfilePage({ id }: { id: string }) {
               <Button type="submit" className="mt-4 w-full">
                 Unlock Credit Profile
               </Button>
-              <button
-                type="button"
-                onClick={() => setHint((v) => !v)}
-                className="mt-3 w-full text-center text-[11px] text-muted-foreground underline-offset-2 hover:underline"
-              >
-                Forgot the code? Show hint
-              </button>
-              {hint ? (
-                <p className="mt-1.5 text-center font-mono text-sm font-bold tracking-wider text-foreground">
-                  {buyer.accessCode}
-                </p>
-              ) : null}
             </div>
           </form>
 
